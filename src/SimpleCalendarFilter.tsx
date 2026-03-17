@@ -4,19 +4,19 @@
  */
 import React, { useCallback } from "react";
 import { DatePicker } from "antd";
-import { styled } from "@superset-ui/core";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import type { CalendarFilterProps } from "./types";
 
 const { RangePicker } = DatePicker;
 
-const Wrapper = styled.div`
-  padding: ${({ theme }) => theme.gridUnit * 2}px 0;
-  & .ant-picker {
-    width: 100%;
-  }
-`;
+const wrapperStyle: React.CSSProperties = {
+  padding: "8px 0",
+};
+
+const pickerStyle: React.CSSProperties = {
+  width: "100%",
+};
 
 export default function SimpleCalendarFilter({
   setDataMask,
@@ -78,14 +78,15 @@ export default function SimpleCalendarFilter({
       ? [dayjs(val[0]), dayjs(val[1])]
       : null;
     return (
-      <Wrapper>
+      <div style={wrapperStyle}>
         <RangePicker
+          style={pickerStyle}
           value={rangeVal}
           onChange={handleRangeChange}
           format={dateFormat}
           allowClear
         />
-      </Wrapper>
+      </div>
     );
   }
 
@@ -93,13 +94,14 @@ export default function SimpleCalendarFilter({
     typeof filterState?.value === "string" ? dayjs(filterState.value) : null;
 
   return (
-    <Wrapper>
+    <div style={wrapperStyle}>
       <DatePicker
+        style={pickerStyle}
         value={singleVal}
         onChange={handleSingleChange}
         format={dateFormat}
         allowClear
       />
-    </Wrapper>
+    </div>
   );
 }
