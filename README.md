@@ -1,4 +1,4 @@
-# superset-plugin-filter-calendar
+# SFCalendarPicker
 
 Простой календарный фильтр для Apache Superset выбор даты одним кликом вместо многошагового.
 
