@@ -1,0 +1,17 @@
+{
+  "name": "superset-plugin-filter-calendar",
+  "version": "0.1.0",
+  "description": "Simple calendar date picker filter for Apache Superset",
+  "sideEffects": false,
+  "main": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@superset-ui/chart-controls": "*",
+    "@superset-ui/core": "*",
+    "antd": "*",
+    "dayjs": "*",
+    "react": "^16.13.1 || ^17 || ^18"
+  }
+}
