@@ -15,8 +15,8 @@
 
 ```bash
 cd /tmp
-git clone https://github.com/Sque-ak/sfcalanderpicker.git
-cd sfcalanderpicker
+git clone https://github.com/Sque-ak/sfcalendarpicker.git
+cd sfcalendarpicker
 ```
 
 ### 2. Запустить скрипт установки
@@ -39,7 +39,7 @@ sudo bash install.sh /path/to/superset-frontend
 sudo systemctl restart superset
 
 # Если через Docker:
-docker restart smartfinance-superset
+docker restart superset
 ```
 
 ## Использование
@@ -55,12 +55,12 @@ docker restart smartfinance-superset
 FRONTEND=/path/to/superset-frontend
 
 # Скопировать в packages
-cp -r . $FRONTEND/packages/superset-plugin-filter-calendar
+cp -r . $FRONTEND/packages/sfcalendarpicker
 
 # Добавить зависимость
 cd $FRONTEND
-# Отредактировать package.json — добавить:
-#   "superset-plugin-filter-calendar": "file:./packages/superset-plugin-filter-calendar"
+# Отредактировать package.json добавить:
+#   "sfcalendarpicker": "file:./packages/sfcalendarpicker"
 
 # Зарегистрировать в MainPreset
 node scripts/register-plugin.js $FRONTEND

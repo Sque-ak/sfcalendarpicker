@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# install.sh   Install superset-plugin-filter-calendar into a running
+# install.sh   Install sfcalendarpicker into a running
 #              Superset instance and rebuild the frontend.
 #
 # Usage:
-#   git clone https://github.com/Sque-ak/sfcalanderpicker.git
-#   cd sfcalanderpicker
+#   git clone https://github.com/Sque-ak/sfcalendarpicker.git
+#   cd sfcalendarpicker
 #   sudo bash install.sh [/path/to/superset-frontend]
 #
 # Default FRONTEND path: /app/superset-frontend
 
 FRONTEND="${1:-/app/superset-frontend}"
-PLUGIN_NAME="superset-plugin-filter-calendar"
+PLUGIN_NAME="sfcalendarpicker"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo " Superset Calendar Filter Install Script"

@@ -1,5 +1,5 @@
 {
-  "name": "superset-plugin-filter-calendar",
+  "name": "sfcalendarpicker",
   "version": "0.1.0",
   "description": "Simple calendar date picker filter for Apache Superset",
   "sideEffects": false,
