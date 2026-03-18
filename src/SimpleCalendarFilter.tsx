@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
@@ -8,11 +8,48 @@ const { RangePicker } = DatePicker;
 const DISPLAY_FMT = "DD.MM.YYYY";
 const API_FMT = "YYYY-MM-DD";
 
+const PLACEHOLDERS: Record<string, [string, string]> = {
+  ru: ["Начало", "Конец"],
+  en: ["Start", "End"],
+  de: ["Start", "Ende"],
+  fr: ["Début", "Fin"],
+  es: ["Inicio", "Fin"],
+  it: ["Inizio", "Fine"],
+  ja: ["開始", "終了"],
+  ko: ["시작", "끝"],
+  zh: ["开始", "结束"],
+  pt: ["Início", "Fim"],
+  tr: ["Başlangıç", "Bitiş"],
+  nl: ["Start", "Einde"],
+  pl: ["Początek", "Koniec"],
+  uk: ["Початок", "Кінець"],
+  ar: ["البداية", "النهاية"],
+  fa: ["شروع", "پایان"],
+  sk: ["Začiatok", "Koniec"],
+  sl: ["Začetek", "Konec"],
+  ca: ["Inici", "Fi"],
+};
+
+function getDatePickerLocale(loc: string) {
+  const base = loc.split("-")[0];
+  const ph = PLACEHOLDERS[base] || PLACEHOLDERS.en;
+  return {
+    lang: {
+      locale: loc,
+      placeholder: ph[0],
+      rangePlaceholder: ph,
+    },
+    timePickerLocale: { placeholder: "" },
+  };
+}
+
 export default function SimpleCalendarFilter({
   setDataMask,
   filterState,
 }: CalendarFilterProps) {
   const [dates, setDates] = useState<[Dayjs | null, Dayjs | null] | null>(null);
+  const locale = dayjs.locale();
+  const dpLocale = useMemo(() => getDatePickerLocale(locale), [locale]);
 
   useEffect(() => {
     const val = filterState?.value;
@@ -66,12 +103,11 @@ export default function SimpleCalendarFilter({
   return (
     <div style={{ padding: "4px 0" }}>
       <RangePicker
-        style={{ width: "100%" }}
         value={dates}
         onChange={handleChange}
         format={DISPLAY_FMT}
-        placeholder={["Начало", "Конец"]}
-        size="small"
+        placeholder={dpLocale.lang.rangePlaceholder as [string, string]}
+        locale={dpLocale}
         allowClear
       />
     </div>
