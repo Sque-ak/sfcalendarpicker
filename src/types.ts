@@ -1,11 +1,6 @@
 import type { QueryFormData, DataMask } from "@superset-ui/core";
 
-export type CalendarMode = "single" | "range";
-
-export interface CalendarFilterFormData extends QueryFormData {
-  mode?: CalendarMode;
-  dateFormat?: string;
-}
+export interface CalendarFilterFormData extends QueryFormData {}
 
 export interface CalendarFilterProps {
   height: number;

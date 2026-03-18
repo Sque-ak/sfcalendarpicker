@@ -1,107 +1,182 @@
 /**
- * Filter plugin that renders a simple antd DatePicker / RangePicker
- * and emits time_range via setDataMask.
+ * 1С-style calendar filter for Superset.
+ * Two date pickers (start/end) + quick period buttons.
  */
-import React, { useCallback } from "react";
-import { DatePicker } from "antd";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { DatePicker, Button } from "antd";
 import dayjs from "dayjs";
+import quarterOfYear from "dayjs/plugin/quarterOfYear";
 import type { Dayjs } from "dayjs";
 import type { CalendarFilterProps } from "./types";
 
-const { RangePicker } = DatePicker;
+dayjs.extend(quarterOfYear);
 
-const wrapperStyle: React.CSSProperties = {
-  padding: "8px 0",
-};
+const DISPLAY_FMT = "DD.MM.YYYY";
+const API_FMT = "YYYY-MM-DD";
 
-const pickerStyle: React.CSSProperties = {
-  width: "100%",
+interface Preset {
+  label: string;
+  start: Dayjs;
+  end: Dayjs;
+}
+
+function getPresets(): Preset[] {
+  const t = dayjs().startOf("day");
+  return [
+    { label: "Сегодня", start: t, end: t },
+    { label: "Вчера", start: t.subtract(1, "day"), end: t.subtract(1, "day") },
+    { label: "Неделя", start: t.startOf("week"), end: t.endOf("week").startOf("day") },
+    { label: "Месяц", start: t.startOf("month"), end: t.endOf("month").startOf("day") },
+    { label: "Квартал", start: t.startOf("quarter"), end: t.endOf("quarter").startOf("day") },
+    { label: "Год", start: t.startOf("year"), end: t.endOf("year").startOf("day") },
+    {
+      label: "Пр. месяц",
+      start: t.subtract(1, "month").startOf("month"),
+      end: t.subtract(1, "month").endOf("month").startOf("day"),
+    },
+  ];
+}
+
+const btnStyle: React.CSSProperties = {
+  padding: "0 6px",
+  fontSize: 11,
+  height: 22,
+  lineHeight: "22px",
 };
 
 export default function SimpleCalendarFilter({
   setDataMask,
   filterState,
-  formData,
 }: CalendarFilterProps) {
-  const { mode = "single", dateFormat = "YYYY-MM-DD" } = formData;
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
 
-  /* ── single date ── */
-  const handleSingleChange = useCallback(
-    (date: Dayjs | null) => {
-      if (!date) {
-        setDataMask({
-          extraFormData: {},
-          filterState: { value: undefined },
-        });
-        return;
-      }
-      const from = date.format("YYYY-MM-DD");
-      const to = date.add(1, "day").format("YYYY-MM-DD");
-      setDataMask({
-        extraFormData: { time_range: `${from} : ${to}` },
-        filterState: {
-          value: from,
-          label: date.format(dateFormat),
-        },
-      });
-    },
-    [setDataMask, dateFormat],
-  );
-
-  /* ── date range ── */
-  const handleRangeChange = useCallback(
-    (dates: [Dayjs | null, Dayjs | null] | null) => {
-      if (!dates || !dates[0] || !dates[1]) {
-        setDataMask({
-          extraFormData: {},
-          filterState: { value: undefined },
-        });
-        return;
-      }
-      const from = dates[0].format("YYYY-MM-DD");
-      const to = dates[1].add(1, "day").format("YYYY-MM-DD");
-      setDataMask({
-        extraFormData: { time_range: `${from} : ${to}` },
-        filterState: {
-          value: [dates[0].format("YYYY-MM-DD"), dates[1].format("YYYY-MM-DD")],
-          label: `${dates[0].format(dateFormat)} — ${dates[1].format(dateFormat)}`,
-        },
-      });
-    },
-    [setDataMask, dateFormat],
-  );
-
-  /* ── render ── */
-  if (mode === "range") {
+  /* restore saved state on mount */
+  useEffect(() => {
     const val = filterState?.value;
-    const rangeVal: [Dayjs, Dayjs] | null = Array.isArray(val)
-      ? [dayjs(val[0]), dayjs(val[1])]
-      : null;
-    return (
-      <div style={wrapperStyle}>
-        <RangePicker
-          style={pickerStyle}
-          value={rangeVal}
-          onChange={handleRangeChange}
-          format={dateFormat}
-          allowClear
-        />
-      </div>
-    );
-  }
+    if (!val) return;
+    if (Array.isArray(val) && val.length === 2) {
+      setStartDate(dayjs(val[0]));
+      setEndDate(dayjs(val[1]));
+    } else if (typeof val === "string") {
+      setStartDate(dayjs(val));
+      setEndDate(dayjs(val));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const singleVal =
-    typeof filterState?.value === "string" ? dayjs(filterState.value) : null;
+  const applyFilter = useCallback(
+    (start: Dayjs | null, end: Dayjs | null) => {
+      if (!start || !end) {
+        setDataMask({
+          extraFormData: {},
+          filterState: { value: undefined },
+        });
+        return;
+      }
+      const fromApi = start.format(API_FMT);
+      const toApi = end.add(1, "day").format(API_FMT);
+      setDataMask({
+        extraFormData: { time_range: `${fromApi} : ${toApi}` },
+        filterState: {
+          value: [start.format(API_FMT), end.format(API_FMT)],
+          label: start.isSame(end, "day")
+            ? start.format(DISPLAY_FMT)
+            : `${start.format(DISPLAY_FMT)} — ${end.format(DISPLAY_FMT)}`,
+        },
+      });
+    },
+    [setDataMask],
+  );
+
+  const handleStartChange = useCallback(
+    (date: Dayjs | null) => {
+      setStartDate(date);
+      let eff = endDate;
+      if (date && eff && eff.isBefore(date, "day")) {
+        eff = date;
+        setEndDate(date);
+      }
+      applyFilter(date, eff);
+    },
+    [endDate, applyFilter],
+  );
+
+  const handleEndChange = useCallback(
+    (date: Dayjs | null) => {
+      setEndDate(date);
+      let eff = startDate;
+      if (date && eff && eff.isAfter(date, "day")) {
+        eff = date;
+        setStartDate(date);
+      }
+      applyFilter(eff, date);
+    },
+    [startDate, applyFilter],
+  );
+
+  const handlePreset = useCallback(
+    (start: Dayjs, end: Dayjs) => {
+      setStartDate(start);
+      setEndDate(end);
+      applyFilter(start, end);
+    },
+    [applyFilter],
+  );
+
+  const handleClear = useCallback(() => {
+    setStartDate(null);
+    setEndDate(null);
+    applyFilter(null, null);
+  }, [applyFilter]);
+
+  const presets = useMemo(() => getPresets(), []);
 
   return (
-    <div style={wrapperStyle}>
-      <DatePicker
-        style={pickerStyle}
-        value={singleVal}
-        onChange={handleSingleChange}
-        format={dateFormat}
-        allowClear
-      />
+    <div style={{ padding: "4px 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
+        <DatePicker
+          style={{ flex: 1 }}
+          value={startDate}
+          onChange={handleStartChange}
+          format={DISPLAY_FMT}
+          placeholder="Начало"
+          allowClear={false}
+          size="small"
+        />
+        <span style={{ color: "#999", flexShrink: 0 }}>—</span>
+        <DatePicker
+          style={{ flex: 1 }}
+          value={endDate}
+          onChange={handleEndChange}
+          format={DISPLAY_FMT}
+          placeholder="Конец"
+          allowClear={false}
+          size="small"
+        />
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 0" }}>
+        {presets.map((p) => (
+          <Button
+            key={p.label}
+            type="link"
+            size="small"
+            style={btnStyle}
+            onClick={() => handlePreset(p.start, p.end)}
+          >
+            {p.label}
+          </Button>
+        ))}
+        <Button
+          type="link"
+          size="small"
+          danger
+          style={btnStyle}
+          onClick={handleClear}
+        >
+          Сброс
+        </Button>
+      </div>
     </div>
   );
 }
