@@ -68,8 +68,8 @@ export default function SimpleCalendarFilter({
         setDataMask({ extraFormData: {}, filterState: { value: undefined } });
         return;
       }
-      const fromApi = start.add(1, "day").format(API_FMT);
-      const toApi = end.add(2, "day").format(API_FMT);
+      const fromApi = start.format(API_FMT);
+      const toApi = end.add(1, "day").format(API_FMT);
       setDataMask({
         extraFormData: { time_range: `${fromApi} : ${toApi}` },
         filterState: {
